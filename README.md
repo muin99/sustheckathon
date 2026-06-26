@@ -180,9 +180,9 @@ curl -X POST http://localhost:8000/analyze-ticket \
 ```
 ### Public API
 
-- Base URL: https://sust1.onukrom.xyz/
-- Health Check: https://sust1.onukrom.xyz/health
-- Ticket Analyzer: https://sust1.onukrom.xyz/analyze-ticket
+- Base URL: https://sust2.onukrom.xyz/
+- Health Check: https://sust2.onukrom.xyz/health
+- Ticket Analyzer: https://sust2.onukrom.xyz/analyze-ticket
 - 
 ## Tests
 
