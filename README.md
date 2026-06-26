@@ -80,10 +80,11 @@ Copy `.env.example` and set real values in your local/deployment environment onl
 
 ```bash
 PORT=8000
-AGENT_ROUTER_TOKEN=your_agent_router_token_here
-AGENT_ROUTER_API_KEY=your_agent_router_token_here
-AGENT_ROUTER_BASE_URL=https://agentrouter.org/v1
-AGENT_ROUTER_MODEL=gpt-5
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_MODEL=openai/gpt-4o-mini
+OPENROUTER_HTTP_REFERER=https://localhost
+OPENROUTER_APP_TITLE=QueueStorm-Investigator
 LLM_TIMEOUT_MS=10000
 ```
 
@@ -91,7 +92,7 @@ The API works without Agent Router credentials. In that case it uses determinist
 
 ## MODELS
 
-- Agent Router model: configured by `AGENT_ROUTER_MODEL`.
+- OpenRouter model: configured by `OPENROUTER_MODEL`.
 - Runtime location: external API via OpenAI-compatible `/chat/completions`.
 - Purpose: optional wording and language interpretation assist.
 - Safety: model output is never trusted directly; enum values, evidence decisions, transaction matches, and customer replies are validated or replaced by deterministic rules.

@@ -4,9 +4,9 @@ function readEnv(name) {
 
 export function isLlmConfigured() {
   return Boolean(
-    getAgentRouterToken() &&
-    readEnv('AGENT_ROUTER_BASE_URL') &&
-    readEnv('AGENT_ROUTER_MODEL')
+    getLlmToken() &&
+    getLlmBaseUrl() &&
+    getLlmModel()
   );
 }
 
@@ -15,7 +15,7 @@ export async function callAgentRouter(payload) {
     return null;
   }
 
-  const baseUrl = readEnv('AGENT_ROUTER_BASE_URL').replace(/\/+$/, '');
+  const baseUrl = getLlmBaseUrl().replace(/\/+$/, '');
   const timeoutMs = Number(readEnv('LLM_TIMEOUT_MS') || 10000);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), Math.max(1000, timeoutMs));
@@ -34,11 +34,12 @@ export async function callAgentRouter(payload) {
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
-        authorization: `Bearer ${getAgentRouterToken()}`,
-        'content-type': 'application/json'
+        authorization: `Bearer ${getLlmToken()}`,
+        'content-type': 'application/json',
+        ...getOptionalOpenRouterHeaders()
       },
       body: JSON.stringify({
-        model: readEnv('AGENT_ROUTER_MODEL'),
+        model: getLlmModel(),
         temperature: 0,
         response_format: { type: 'json_object' },
         messages: [
@@ -66,6 +67,23 @@ export async function callAgentRouter(payload) {
   }
 }
 
-function getAgentRouterToken() {
-  return readEnv('AGENT_ROUTER_TOKEN') || readEnv('AGENT_ROUTER_API_KEY');
+function getLlmToken() {
+  return readEnv('OPENROUTER_API_KEY') || readEnv('AGENT_ROUTER_TOKEN') || readEnv('AGENT_ROUTER_API_KEY');
+}
+
+function getLlmBaseUrl() {
+  return readEnv('OPENROUTER_BASE_URL') || readEnv('AGENT_ROUTER_BASE_URL');
+}
+
+function getLlmModel() {
+  return readEnv('OPENROUTER_MODEL') || readEnv('AGENT_ROUTER_MODEL');
+}
+
+function getOptionalOpenRouterHeaders() {
+  const headers = {};
+  const referer = readEnv('OPENROUTER_HTTP_REFERER');
+  const title = readEnv('OPENROUTER_APP_TITLE');
+  if (referer) headers['HTTP-Referer'] = referer;
+  if (title) headers['X-OpenRouter-Title'] = title;
+  return headers;
 }

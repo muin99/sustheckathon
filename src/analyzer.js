@@ -97,17 +97,19 @@ export function analyzeWithRules(ticket, facts = buildFacts(ticket)) {
 
   if (facts.isMerchantSettlement) {
     const txn = bestTransaction(facts, ['settlement']);
+    const completedButClaimedMissing = txn?.status === 'completed' &&
+      hasAny(facts.lower, ['not arrived', 'not received', 'not settled', 'has not arrived', 'have not received', 'পাইনি', 'আসেনি']);
     return makeResult({
       ticket,
       facts,
       case_type: 'merchant_settlement_delay',
       relevant_transaction_id: txn?.transaction_id || null,
-      evidence_verdict: txn ? 'consistent' : 'insufficient_data',
+      evidence_verdict: txn ? completedButClaimedMissing ? 'inconsistent' : 'consistent' : 'insufficient_data',
       severity: 'medium',
       department: 'merchant_operations',
-      human_review_required: false,
-      confidence: txn ? 0.92 : 0.66,
-      reason_codes: ['merchant_settlement', txn?.status || 'needs_settlement_details'].filter(Boolean)
+      human_review_required: completedButClaimedMissing,
+      confidence: txn ? completedButClaimedMissing ? 0.76 : 0.92 : 0.66,
+      reason_codes: ['merchant_settlement', completedButClaimedMissing ? 'evidence_inconsistent' : txn?.status || 'needs_settlement_details'].filter(Boolean)
     });
   }
 
@@ -187,7 +189,10 @@ export function analyzeWithRules(ticket, facts = buildFacts(ticket)) {
     });
   }
 
-  const vague = facts.amounts.length === 0 && !facts.hasTxnIdMention && facts.complaintWordCount < 10;
+  const vague = facts.amounts.length === 0 &&
+    !facts.hasTxnIdMention &&
+    facts.complaintWordCount < 10 &&
+    !hasAny(facts.lower, ['transaction', 'cash out', 'cash-out', 'cashout', 'লেনদেন']);
   if (vague || facts.transactions.length !== 1) {
     return makeResult({
       ticket,
@@ -260,7 +265,9 @@ export function buildFacts(ticket) {
       hasAny(lower, ['settlement delay', 'settlement not', 'not settled', 'সেটেলমেন্ট']),
     isAgentCashIn: hasAny(lower, ['agent', 'cash in', 'cash-in', 'cashin', 'এজেন্ট', 'ক্যাশ ইন']) &&
       hasAny(lower, ['balance', 'not reflected', "didn't get", 'not received', 'আসেনি', 'পাইনি', 'ব্যালেন্স']),
-    isPaymentFailed: hasAny(lower, ['failed', 'failure', 'app showed failed', 'payment failed', 'ফেইল', 'ব্যর্থ']) ||
+    isPaymentFailed: (hasAny(lower, ['failed', 'failure', 'app showed failed', 'payment failed', 'ফেইল', 'ব্যর্থ']) &&
+      (hasAny(lower, ['payment', 'pay', 'recharge', 'bill', 'merchant', 'পেমেন্ট', 'রিচার্জ', 'বিল']) ||
+        transactions.some((txn) => txn.type === 'payment'))) ||
       (hasAny(lower, ['deducted', 'deduct', 'কেটে', 'কাটা']) && hasAny(lower, ['payment', 'pay', 'recharge', 'bill', 'পেমেন্ট', 'রিচার্জ', 'বিল'])),
     isWrongTransfer: hasAny(lower, ['wrong number', 'wrong person', 'wrong recipient', 'by mistake', 'mistake', 'reverse it', "didn't get it", 'did not get it', 'did not get', 'not received', 'ভুল', 'পাঠিয়েছি', 'পাঠিয়েছি']) &&
       hasAny(lower, ['sent', 'transfer', 'number', 'recipient', 'brother', 'person', 'পাঠ', 'নাম্বার']),
