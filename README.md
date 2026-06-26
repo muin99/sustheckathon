@@ -179,9 +179,11 @@ curl -X POST http://localhost:8000/analyze-ticket \
   -d '{"ticket_id":"LOCAL-TEST","complaint":"Someone called and asked for my OTP.","transaction_history":[]}'
 ```
 ### Public API
-Base URL: https://sust.onukrom.xyz/
-Health Check: https://sust.onukrom.xyz/health
-Ticket Analyzer: https://sust.onukrom.xyz/analyze-ticket 
+
+- Base URL: https://sust.onukrom.xyz/
+- Health Check: https://sust.onukrom.xyz/health
+- Ticket Analyzer: https://sust.onukrom.xyz/analyze-ticket
+- 
 ## Tests
 
 ```bash
