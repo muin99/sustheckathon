@@ -10,7 +10,7 @@ export function isLlmConfigured() {
   );
 }
 
-export async function callAgentRouter(payload) {
+export async function callLlm(payload) {
   if (!isLlmConfigured()) {
     return null;
   }
@@ -23,6 +23,9 @@ export async function callAgentRouter(payload) {
   const systemPrompt = [
     'You are QueueStorm Investigator, an internal digital finance support copilot.',
     'Return strict JSON only.',
+    'The JSON object must contain exactly these optional text fields when useful: agent_summary, recommended_next_action, customer_reply.',
+    'Do not wrap the answer in response, data, message, markdown, or code fences.',
+    'Do not change transaction IDs, enum decisions, severity, routing, or evidence verdict from the provided rule_result.',
     'Use only allowed enum values.',
     'Never ask for PIN, OTP, password, full card number, or credentials.',
     'Never promise refunds, reversals, recovery, or account unblocks.',
@@ -44,7 +47,18 @@ export async function callAgentRouter(payload) {
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: JSON.stringify(payload) }
+          {
+            role: 'user',
+            content: JSON.stringify({
+              task: 'Improve only the customer-facing and agent-facing wording for this ticket. Return strict JSON with agent_summary, recommended_next_action, and customer_reply.',
+              output_shape: {
+                agent_summary: 'one or two concise operational sentences',
+                recommended_next_action: 'safe operational next step for support agent',
+                customer_reply: 'safe official customer reply'
+              },
+              ticket_context: payload
+            })
+          }
         ]
       }),
       signal: controller.signal
@@ -68,15 +82,15 @@ export async function callAgentRouter(payload) {
 }
 
 function getLlmToken() {
-  return readEnv('OPENROUTER_API_KEY') || readEnv('AGENT_ROUTER_TOKEN') || readEnv('AGENT_ROUTER_API_KEY');
+  return readEnv('OPENROUTER_API_KEY');
 }
 
 function getLlmBaseUrl() {
-  return readEnv('OPENROUTER_BASE_URL') || readEnv('AGENT_ROUTER_BASE_URL');
+  return readEnv('OPENROUTER_BASE_URL');
 }
 
 function getLlmModel() {
-  return readEnv('OPENROUTER_MODEL') || readEnv('AGENT_ROUTER_MODEL');
+  return readEnv('OPENROUTER_MODEL');
 }
 
 function getOptionalOpenRouterHeaders() {

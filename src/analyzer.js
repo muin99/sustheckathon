@@ -1,4 +1,4 @@
-import { callAgentRouter } from './llm.js';
+import { callLlm } from './llm.js';
 import { genericSafeReply, sanitizeText } from './safety.js';
 
 const CASE_TYPES = new Set([
@@ -42,7 +42,7 @@ export async function analyzeTicket(ticket, options = {}) {
   let llmResult = null;
 
   if (options.useLlm !== false && shouldAskLlm(ruleResult, facts)) {
-    llmResult = await callAgentRouter({
+    llmResult = await callLlm({
       complaint: ticket.complaint,
       language: facts.language,
       user_type: ticket.user_type || 'unknown',
